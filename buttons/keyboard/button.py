@@ -10,9 +10,3 @@ def phone_number_request(i18n: I18nContext) -> ReplyKeyboardMarkup:
         one_time_keyboard=True
     )
 
-def main(i18n: I18nContext) -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=i18n(""))]
-        ]
-    )

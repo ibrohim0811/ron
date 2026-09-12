@@ -10,4 +10,11 @@ enter_full_name = Ism va familiyangizni kiriting
 
 error_server = Nimadir xato ketdi 🤔 Qaytadan urinib ko'ring!
 
-main=Asosiy
+main=Asosiy Menyu 📊
+select_menu=Menyudan birini tanlang 👇
+settings=Sozlamalar ⚙️
+our_projects=Bizning barcha loyihalar 🧑‍💻
+help=Yordam ❓
+projects=Loyihalarim 💻
+transactions=Tranzaksiyalarim 🪙
+about_us=Biz haqimizda 🫆

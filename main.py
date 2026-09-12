@@ -18,6 +18,7 @@ from middleware.db import DbSessionMiddleware
 from buttons.inline.button import language_button
 from crud.register import get_user_by_telegram_id
 from routers.register import dp as register
+from buttons.inline.button import main_menu
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -40,6 +41,8 @@ async def start(msg: types.Message, i18n: I18nContext, db: AsyncSession):
     if user is not None:
         await i18n.set_locale(user.language)
         await msg.answer(f"{i18n('welcome')} {user.full_name}")
+        await msg.answer(f"{i18n('main')} \n{i18n('select_menu')}", reply_markup=main_menu(i18n=i18n))
+
         return  # Qaytadan til so'ramasligi uchun tugatamiz
 
     # Yangi foydalanuvchilar uchun
