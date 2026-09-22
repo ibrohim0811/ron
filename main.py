@@ -4,6 +4,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram import types
+from fastapi import FastAPI, Request
 from aiogram.types import ReactionTypeEmoji
 from aiogram.fsm.storage.memory import MemoryStorage
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,12 +19,14 @@ from middleware.db import DbSessionMiddleware
 from buttons.inline.button import language_button
 from crud.register import get_user_by_telegram_id
 from routers.register import dp as register
+from services.ibank.main import dp as jamgarma
 from buttons.inline.button import main_menu
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+app = FastAPI()
 
 # Middleware'larni sozlash
 i18n_middleware.setup(dispatcher=dp)
@@ -31,6 +34,7 @@ dp.update.outer_middleware(DbSessionMiddleware())
 
 # Routerlarni ulash
 dp.include_router(register)
+dp.include_router(jamgarma)
 
 
 @dp.message(Command('start'))
@@ -73,3 +77,19 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     # Faqat BIR MARTA asyncio.run() chaqiriladi!
     asyncio.run(main())
+
+
+
+# @app.on_event("startup")
+# async def on_startup():
+#     async with engine.begin() as conn:
+#         await conn.run_sync(Base.metadata.create_all)
+
+
+# # Telegram Webhook so'rovlarini qabul qilish joyi
+# @app.post("/api/webhook")
+# async def webhook(request: Request):
+#     data = await request.json()
+#     update = types.Update(**data)
+#     await dp.feed_update(bot, update)
+#     return {"status": "ok"}

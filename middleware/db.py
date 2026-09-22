@@ -5,19 +5,12 @@ from aiogram.types import TelegramObject
 from core.database import AsyncSessionLocal
 
 class DbSessionMiddleware(BaseMiddleware):
-
     async def __call__(
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        data: Dict[str, Any],
+        data: Dict[str, Any]
     ) -> Any:
         async with AsyncSessionLocal() as session:
             data["db"] = session
-            try:
-                result = await handler(event, data)
-                await session.commit()  # Handler muvaffaqiyatli tugasa, commit qiladi
-                return result
-            except Exception:
-                await session.rollback() # Xatolik bo'lsa rollback qiladi
-                raise
+            return await handler(event, data) # Handler tugaguncha ulanish yopilmaydi
