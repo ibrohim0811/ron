@@ -8,28 +8,37 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
-# SSL context (Neon PostgreSQL uchun)
+# Ensure asyncpg driver is specified for PostgreSQL URLs
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+asyncpg://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# SSL context (for Neon PostgreSQL or Supabase)
 connect_args = {}
-if DATABASE_URL and "neon.tech" in DATABASE_URL:
+if DATABASE_URL and ("neon.tech" in DATABASE_URL or "supabase" in DATABASE_URL or "sslmode=require" in DATABASE_URL):
     ssl_context = ssl.create_default_context()
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
     connect_args["ssl"] = ssl_context
 
-# Async Engine - Serverless (Vercel) uchun moslashtirilgan
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,  # Production uchun False ma'qul
-    connect_args=connect_args,
-    pool_pre_ping=True,  # O'lik ulanishlarni avtomatik qayta tiklaydi (MUHIM!)
-    pool_recycle=300,    # 5 minutdan oshgan ulanishlarni yangilaydi
-    # Vercel Serverless'da ulanishlar to'planib qolmasligi uchun NullPool tavsiya etiladi:
-    # poolclass=NullPool 
-)
+# Engine configuration optimized for Vercel Serverless
+engine_kwargs = {
+    "echo": False,
+    "connect_args": connect_args,
+    "pool_pre_ping": True,
+}
 
-# Aiogram Middleware va FastAPI uchun Session Maker
+# Use NullPool in serverless environments to avoid stale connections
+if os.getenv("VERCEL") or os.getenv("SERVERLESS"):
+    engine_kwargs["poolclass"] = NullPool
+else:
+    engine_kwargs["pool_recycle"] = 300
+
+engine = create_async_engine(DATABASE_URL, **engine_kwargs)
+
 AsyncSessionLocal = async_sessionmaker(
     bind=engine, 
     class_=AsyncSession, 
@@ -39,7 +48,6 @@ AsyncSessionLocal = async_sessionmaker(
 class Base(DeclarativeBase):
     pass
 
-# FastAPI endpointlari uchun (agar kerak bo'lsa)
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
         try:
