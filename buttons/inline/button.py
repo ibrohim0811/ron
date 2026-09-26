@@ -14,6 +14,14 @@ def language_button() -> InlineKeyboardMarkup:
         ]
     )
 
+def back_to_menu_button(i18n: I18nContext) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=i18n("back"), callback_data="back_to_menu")]
+        ]
+    )
+
+
 def main_menu(i18n: I18nContext) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[

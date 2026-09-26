@@ -18,3 +18,11 @@ help=Yordam ❓
 projects=Loyihalarim 💻
 transactions=Tranzaksiyalarim 🪙
 about_us=Biz haqimizda 🫆
+
+back=⬅️ Orqaga
+settings_text=Sozlamalar bo'limi tez orada ishga tushadi ⚙️
+projects_text=Sizda hali loyihalar yo'q. Yangi loyiha uchun admin bilan bog'laning 💻
+transactions_text=Tranzaksiyalar tarixi bu yerda ko'rinadi 🪙
+help_text=Savollaringiz bo'lsa qo'llab-quvvatlash xizmatiga yozing ❓
+about_us_text=RON by IDEV — startaplar va bizneslar uchun IT xizmatlar 🫆
+our_projects_text=Bizning ilgari qilgan loyihalarimiz tez orada shu yerda chiqadi 🧑‍💻
