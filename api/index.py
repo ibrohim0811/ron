@@ -76,23 +76,18 @@ async def start(msg: types.Message, i18n: I18nContext, db: AsyncSession):
     )
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Lifespan: Webhook o'rnatish va bazani ishga tushirish
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    if WEBHOOK_URL:
-        await bot.set_webhook(url=WEBHOOK_URL)
-    yield
-    await bot.delete_webhook()
-
-app = FastAPI(lifespan=lifespan)
-
+app = FastAPI()
 
 @app.post("/api/webhook")
 async def webhook(request: Request):
-    data = await request.json()
-    update = types.Update(**data)
-    await dp.feed_update(bot, update)
-    return {"status": "ok"}
+    try:
+        data = await request.json()
+        update = types.Update(**data)
+        await dp.feed_update(bot, update)
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/")
+async def root():
+    return {"status": "bot is running"}
