@@ -151,23 +151,23 @@ async def webhook(request: Request):
 
 
 @app.get("/api/set_webhook")
-@app.get("/set_webhook")
-async def set_webhook():
+@app.post("/api/webhook")
+async def webhook(request: Request):
     if not bot:
-        return {"ok": False, "error": "BOT_TOKEN missing in environment variables"}
-    if not WEBHOOK_URL:
-        return {"ok": False, "error": "WEBHOOK_URL missing in environment variables"}
+        return {"status": "error", "message": "BOT_TOKEN is missing"}
+    
     try:
-        res = await bot.set_webhook(url=WEBHOOK_URL, drop_pending_updates=True)
-        info = await bot.get_webhook_info()
-        return {
-            "ok": res,
-            "webhook_url": info.url,
-            "pending_update_count": info.pending_update_count,
-            "last_error_message": info.last_error_message
-        }
+        data = await request.json()
+        update = types.Update(**data)
+        
+        # Updates'ni qayta ishlash to'liq tugashini kutamiz
+        await dp.feed_update(bot=bot, update=update)
+        
+        return {"status": "ok"}
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        logger.exception(f"Error handling webhook update: {e}")
+        # Telegram qayta-qayta qaytarmasligi uchun baribir 200 qaytargan ma'qul
+        return {"status": "error", "message": str(e)}
 
 
 @app.get("/")
