@@ -19,15 +19,28 @@ from middleware.db import DbSessionMiddleware
 from buttons.inline.button import language_button, main_menu
 from crud.register import get_user_by_telegram_id
 
-# Routerlarni to'g'ri import qilish (Dispatcer o'rniga Router bo'lishi kerak)
-from routers.register import dp as register_router
-from routers.menu import dp as menu_router
+# Routerlarni to'g'ri import qilish
+try:
+    from routers.register import router as register_router
+except ImportError:
+    from routers.register import dp as register_router
+
+try:
+    from routers.menu import router as menu_router
+except ImportError:
+    from routers.menu import dp as menu_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # https://ron-psi.vercel.app/api/webhook bo'lishi kerak!
+
+# WEBHOOK_URL oxirida /api/webhook bo'lishini kafolatlaymiz
+RAW_WEBHOOK_URL = os.getenv("WEBHOOK_URL", "").rstrip("/")
+if RAW_WEBHOOK_URL:
+    WEBHOOK_URL = RAW_WEBHOOK_URL if RAW_WEBHOOK_URL.endswith("/api/webhook") else f"{RAW_WEBHOOK_URL}/api/webhook"
+else:
+    WEBHOOK_URL = ""
 
 bot = Bot(token=BOT_TOKEN) if BOT_TOKEN else None
 dp = Dispatcher(storage=MemoryStorage())
@@ -98,7 +111,29 @@ async def start_handler(msg: types.Message, command: CommandObject, i18n: I18nCo
     )
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Baza jadvallarini tekshirish/yaratish
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables successfully checked/created.")
+    except Exception as e:
+        logger.error(f"Database initialization error: {e}")
+
+    # Webhook-ni avtomatik tekshirish va o'rnatish
+    if bot and WEBHOOK_URL:
+        try:
+            current_info = await bot.get_webhook_info()
+            if current_info.url != WEBHOOK_URL:
+                await bot.set_webhook(url=WEBHOOK_URL, drop_pending_updates=True)
+                logger.info(f"Webhook set to {WEBHOOK_URL}")
+        except Exception as e:
+            logger.error(f"Error setting webhook on lifespan start: {e}")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.post("/api/webhook")
@@ -123,7 +158,6 @@ async def set_webhook():
     if not WEBHOOK_URL:
         return {"ok": False, "error": "WEBHOOK_URL missing in environment variables"}
     try:
-        # Vercel har doim HTTPS ishlatadi
         res = await bot.set_webhook(url=WEBHOOK_URL, drop_pending_updates=True)
         info = await bot.get_webhook_info()
         return {
