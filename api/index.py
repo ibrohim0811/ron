@@ -20,8 +20,8 @@ from buttons.inline.button import language_button, main_menu
 from crud.register import get_user_by_telegram_id
 
 # Routerlarni to'g'ri import qilish (Dispatcer o'rniga Router bo'lishi kerak)
-from routers.register import router as register_router
-from routers.menu import router as menu_router
+from routers.register import dp as register_router
+from routers.menu import dp as menu_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
